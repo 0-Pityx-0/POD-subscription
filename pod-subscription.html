@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>POD-подписка</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #0E1116;
+      font-family: 'Inter', sans-serif;
+      color: #eef2ff;
+      line-height: 1.4;
+      min-height: 100vh;
+      padding: 0.8rem;
+    }
+
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Верхняя панель */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #1a1f2a;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+    }
+    .user-name {
+      font-weight: 600;
+      color: #F5B700;
+    }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #F5B700;
+      color: #F5B700;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    .rules-btn {
+      background: transparent;
+      border: 1.5px solid #F5B700;
+      color: #F5B700;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Экран авторизации */
+    .auth-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+    .auth-card {
+      background: #12161c;
+      border-radius: 32px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 450px;
+      border: 1px solid #F5B700;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.6rem;
+      background: #1a1f2a;
+      border-radius: 40px;
+      cursor: pointer;
+      color: #adb7c6;
+    }
+    .auth-tab.active {
+      background: #F5B700;
+      color: #0a0c10;
+      font-weight: 600;
+    }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .auth-form input {
+      background: #0c0f12;
+      border: 1.5px solid #2a2f3a;
+      padding: 0.8rem;
+      border-radius: 20px;
+      color: #fff;
+    }
+    .auth-btn {
+      background: #F5B700;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 40px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .auth-switch {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: #8f9bb3;
+    }
+    .auth-switch span {
+      color: #F5B700;
+      cursor: pointer;
+    }
+    .error-msg {
+      color: #ff6b6b;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    /* Основной контент (скрыт до авторизации) */
+    .main-content {
+      display: none;
+    }
+    .main-content.visible {
+      display: block;
+    }
+
+    /* Табы подписки/пожертвования */
+    .tabs {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: #1a1f2a;
+      border: 1px solid #2a2f3a;
+      padding: 0.6rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #adb7c6;
+      font-size: 0.9rem;
+    }
+    .tab-btn.active {
+      background: #F5B700;
+      color: #0a0c10;
+      border-color: #F5B700;
+    }
+    .tab-content {
+      display: none;
+      animation: fade 0.2s;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .payment-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+    }
+    .left-panel, .right-panel {
+      flex: 1;
+      min-width: 260px;
+      background: rgba(15, 18, 22, 0.75);
+      backdrop-filter: blur(4px);
+      border-radius: 28px;
+      padding: 1.2rem;
+      border: 1px solid #242933;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #FFE6A3;
+      border-left: 4px solid #F5B700;
+      padding-left: 0.7rem;
+      margin-bottom: 1rem;
+    }
+    .owner-cards {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+    .owner-card {
+      background: #0c0f14;
+      border: 2px solid #2a2f3a;
+      border-radius: 20px;
+      padding: 0.8rem;
+      flex: 1;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .owner-card.active {
+      border-color: #F5B700;
+      background: #1a1f2a;
+    }
+    .owner-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .owner-device, .owner-pay {
+      font-size: 0.7rem;
+      color: #8f9bb3;
+      margin-top: 0.2rem;
+    }
+    .plans-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+    }
+    .plan-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 20px;
+    }
+    .plan-item:hover {
+      background: rgba(245,183,0,0.1);
+    }
+    .plan-dot {
+      width: 14px;
+      height: 14px;
+      background: #3a4050;
+      border-radius: 50%;
+    }
+    .plan-item.active .plan-dot {
+      background: #F5B700;
+      box-shadow: 0 0 0 3px rgba(245,183,0,0.3);
+    }
+    .plan-info {
+      flex: 1;
+    }
+    .plan-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .plan-price {
+      font-size: 0.8rem;
+      color: #F5B700;
+    }
+    .plan-desc {
+      font-size: 0.65rem;
+      color: #8f9bb3;
+    }
+    .input-group {
+      margin: 1rem 0;
+    }
+    input, select {
+      width: 100%;
+      background: #0c0f12;
+      border: 1.5px solid #2a2f3a;
+      padding: 0.7rem 1rem;
+      border-radius: 20px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+    }
+    .btn-primary {
+      background: #F5B700;
+      border: none;
+      padding: 0.8rem;
+      width: 100%;
+      border-radius: 40px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.8rem;
+    }
+    .discount-badge {
+      background: #1f2a3a;
+      border-radius: 60px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.7rem;
+      color: #F5B700;
+      display: inline-block;
+      margin-bottom: 0.8rem;
+    }
+    .total-price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0.8rem 0;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      background: #12161c;
+      border-radius: 28px;
+      padding: 1.5rem;
+      max-width: 420px;
+      width: 90%;
+      border: 1px solid #F5B700;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .payment-details p {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a2f3a;
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+    .rules-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    .rules-table th, .rules-table td {
+      border: 1px solid #2a2f3a;
+      padding: 6px;
+      font-size: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .owner-cards { flex-direction: column; }
+      .tab-btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+      .left-panel, .right-panel { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="main-wrapper">
+  <!-- Экран авторизации -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-auth-tab="login">Вход</div>
+        <div class="auth-tab" data-auth-tab="register">Регистрация</div>
+      </div>
+      <div id="loginForm" class="auth-form">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Пароль">
+        <button class="auth-btn" id="doLoginBtn">Войти</button>
+        <div class="auth-switch">Нет аккаунта? <span id="switchToRegister">Зарегистрироваться</span></div>
+        <div id="loginError" class="error-msg"></div>
+      </div>
+      <div id="registerForm" class="auth-form" style="display: none;">
+        <input type="text" id="regName" placeholder="Имя">
+        <input type="email" id="regEmail" placeholder="Email">
+        <input type="password" id="regPassword" placeholder="Пароль">
+        <button class="auth-btn" id="doRegisterBtn">Зарегистрироваться</button>
+        <div class="auth-switch">Уже есть аккаунт? <span id="switchToLogin">Войти</span></div>
+        <div id="regError" class="error-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Основной контент (после входа) -->
+  <div id="mainContent" class="main-content">
+    <div class="top-bar">
+      <div class="user-info">
+        <span>👤 <span id="userNameDisplay"></span></span>
+        <button class="logout-btn" id="logoutBtn">Выйти</button>
+      </div>
+      <button class="rules-btn" id="openRulesBtn">📜 Правила подписки</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="subscription">📱 Подписка POD</button>
+      <button class="tab-btn" data-tab="donation">❤️ Пожертвование</button>
+    </div>
+
+    <!-- Подписка -->
+    <div id="subscriptionTab" class="tab-content active">
+      <div class="payment-container">
+        <div class="left-panel">
+          <div class="section-title">👥 Выбери владельца</div>
+          <div class="owner-cards" id="ownerSelect">
+            <div class="owner-card" data-owner="maxim" data-paymethod="card">
+              <div class="owner-name">Максим</div>
+              <div class="owner-device">📟 Aegis Hero 5</div>
+              <div class="owner-pay">💳 Оплата: карта / перевод</div>
+            </div>
+            <div class="owner-card" data-owner="roma" data-paymethod="cash">
+              <div class="owner-name">Рома</div>
+              <div class="owner-device">💨 Smoant Pasito 2</div>
+              <div class="owner-pay">💰 Оплата: наличные</div>
+            </div>
+          </div>
+          <div class="section-title">💨 Тарифы</div>
+          <div class="plans-list" id="plansList"></div>
+        </div>
+        <div class="right-panel">
+          <div class="section-title">📝 Активация</div>
+          <div class="input-group">
+            <label>📱 Telegram Username</label>
+            <input type="text" id="tgName" placeholder="@username">
+          </div>
+          <div id="discountInfo" class="discount-badge" style="display: none;">🎁 <span id="discountOwnerText"></span> скидка 10%</div>
+          <div class="total-price">Итого: <span id="totalPrice">0</span> ₽</div>
+          <button class="btn-primary" id="subscribeBtn">Оформить подписку</button>
+          <div style="font-size: 0.65rem; text-align: center; margin-top: 0.8rem;">* При оплате картой покажутся реквизиты</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Пожертвование -->
+    <div id="donationTab" class="tab-content">
+      <div class="payment-container" style="justify-content: center;">
+        <div class="left-panel" style="max-width: 500px;">
+          <div class="section-title">🍀 Пожертвование на расходники</div>
+          <p style="margin-bottom: 0.8rem;">Поддержите владельца — скидка 10% на подписку у ЭТОГО же владельца!</p>
+          <div class="input-group">
+            <label>👤 Кому переводите?</label>
+            <select id="donationOwner">
+              <option value="maxim">Максим (карта/перевод)</option>
+              <option value="roma">Рома (наличные)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>💰 Сумма (мин. 50 ₽)</label>
+            <input type="number" id="donationAmount" min="50" value="100" step="10">
+          </div>
+          <button class="btn-primary" id="donateBtn">❤️ Пожертвовать</button>
+          <p id="donationStatus" style="margin-top: 0.8rem; font-size: 0.75rem;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка реквизитов (Максим) -->
+<div id="cardDetailsModal" class="modal">
+  <div class="modal-content">
+    <h2 id="cardModalTitle">💳 Реквизиты Максима</h2>
+    <div class="payment-details">
+      <p><span>Номер телефона</span><span>+7 995 501-76-07</span></p>
+      <p><span>Банк</span><span>СберБанк</span></p>
+      <p><span>Назначение</span><span id="paymentPurpose">Оплата подписки</span></p>
+    </div>
+    <button class="btn-primary" id="confirmPayment">Подтвердить оплату</button>
+    <button class="btn-primary" id="closeCardModal" style="background:#2a2f3a;">Закрыть</button>
+  </div>
+</div>
+
+<!-- Модалка наличных (Рома) -->
+<div id="cashModal" class="modal">
+  <div class="modal-content">
+    <h2>💰 Оплата наличными</h2>
+    <p>Рома принимает только наличные. Свяжитесь с ним лично для передачи денег.</p>
+    <p style="color:#F5B700; margin-top: 0.5rem;">Telegram: @roma_pod (пример)</p>
+    <button class="btn-primary" id="closeCashModal">Закрыть</button>
+  </div>
+</div>
+
+<!-- Модалка правил (ПОЛНАЯ ВЕРСИЯ) -->
+<div id="rulesModal" class="modal">
+  <div class="modal-content" style="max-width: 700px;">
+    <h2 style="color:#FFE6A3; margin-bottom: 1rem;">📛 ПРАВИЛА ПОДПИСОЧНОГО ИСПОЛЬЗОВАНИЯ POD-УСТРОЙСТВА</h2>
+    <h3>1. 📜 Общие положения</h3>
+    <p>1.1. Использование устройства возможно только при наличии активной подписки.</p>
+    <p>1.2. Без подписки устройство блокируется.</p>
+    <h3>2. 💨 Виды подписок</h3>
+    <p><strong>2.1. По сроку действия</strong><br>Недельная — 7 календарных дней.<br>Месячная — 30 календарных дней.</p>
+    <p><strong>2.2. По типу учёта дней</strong><br>🛠 Рабочая подписка — дни (включая выходные и перерывы) сгорают, даже если вы не парили.<br>🕊 Свободная подписка — сгорают только те дни, в которых была хотя бы одна затяжка. Дни без парения не тратятся и переносятся.</p>
+    <h3>3. ⏳ Продление и остатки</h3>
+    <p>При оплате новой подписки остатки старой не суммируются. Переход с «Рабочей» на «Свободную» и обратно — только после истечения текущей подписки.</p>
+    <h3>4. 🚫 Приостановка подписки при отсутствии жидкости</h3>
+    <p>Если у владельца заканчивается жидкость, подписка пользователя приостанавливается без траты дней. Дни «замораживаются» до момента, когда жидкость снова появится.</p>
+    <h3>5. ⚠️ Санкции за курение без подписки</h3>
+    <table class="rules-table">
+      <thead><tr><th>Нарушение</th><th>Последствие</th></tr></thead>
+      <tbody>
+        <tr><td>Первое</td><td>❌ Блокировка возможности оплатить любую подписку на 7 календарных дней (неделя). Устройство всё это время не работает.</td></tr>
+        <tr><td>Второе (после снятия первой блокировки)</td><td>🔒 Блокировка на 30 календарных дней (месяц).</td></tr>
+      </tbody>
+    </table>
+    <button class="btn-primary" id="closeRulesModal" style="background:#2a2f3a;">Закрыть</button>
+  </div>
+</div>
+
+<script>
+  // --- Модель данных пользователей и скидок ---
+  let currentUser = null;
+
+  function getUsers() {
+    const users = localStorage.getItem('pod_users');
+    return users ? JSON.parse(users) : [];
+  }
+  function saveUsers(users) {
+    localStorage.setItem('pod_users', JSON.stringify(users));
+  }
+  function getUserDiscounts() {
+    const disc = localStorage.getItem('pod_user_discounts');
+    return disc ? JSON.parse(disc) : {};
+  }
+  function saveUserDiscounts(discounts) {
+    localStorage.setItem('pod_user_discounts', JSON.stringify(discounts));
+  }
+
+  function register(name, email, password) {
+    const users = getUsers();
+    if (users.find(u => u.email === email)) return { success: false, error: 'Email уже зарегистрирован' };
+    if (!name || !email || !password) return { success: false, error: 'Заполните все поля' };
+    users.push({ name, email, password });
+    saveUsers(users);
+    return { success: true };
+  }
+
+  function login(email, password) {
+    const users = getUsers();
+    const user = users.find(u => u.email === email && u.password === password);
+    if (!user) return { success: false, error: 'Неверный email или пароль' };
+    return { success: true, user };
+  }
+
+  function getUserDiscount(email, owner) {
+    const discounts = getUserDiscounts();
+    const userDisc = discounts[email];
+    return userDisc && userDisc.active && userDisc.owner === owner;
+  }
+
+  function activateDiscount(email, owner) {
+    const discounts = getUserDiscounts();
+    discounts[email] = { owner, active: true };
+    saveUserDiscounts(discounts);
+  }
+
+  function useDiscount(email, owner) {
+    const discounts = getUserDiscounts();
+    if (discounts[email] && discounts[email].owner === owner && discounts[email].active) {
+      delete discounts[email];
+      saveUserDiscounts(discounts);
+      return true;
+    }
+    return false;
+  }
+
+  // --- DOM элементы ---
+  const authScreen = document.getElementById('authScreen');
+  const mainContent = document.getElementById('mainContent');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const regName = document.getElementById('regName');
+  const regEmail = document.getElementById('regEmail');
+  const regPassword = document.getElementById('regPassword');
+  const loginError = document.getElementById('loginError');
+  const regError = document.getElementById('regError');
+  const userNameDisplay = document.getElementById('userNameDisplay');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Переключение табов авторизации
+  document.querySelectorAll('[data-auth-tab]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-auth-tab');
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      if (target === 'login') {
+        loginForm.style.display = 'flex';
+        registerForm.style.display = 'none';
+      } else {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'flex';
+      }
+    });
+  });
+  document.getElementById('switchToRegister')?.addEventListener('click', () => {
+    document.querySelector('.auth-tab[data-auth-tab="register"]').click();
+  });
+  document.getElementById('switchToLogin')?.addEventListener('click', () => {
+    document.querySelector('.auth-tab[data-auth-tab="login"]').click();
+  });
+
+  document.getElementById('doRegisterBtn').addEventListener('click', () => {
+    const name = regName.value.trim();
+    const email = regEmail.value.trim();
+    const password = regPassword.value.trim();
+    const res = register(name, email, password);
+    if (res.success) {
+      regError.innerText = '';
+      alert('Регистрация успешна! Теперь войдите.');
+      document.querySelector('.auth-tab[data-auth-tab="login"]').click();
+      regName.value = '';
+      regEmail.value = '';
+      regPassword.value = '';
+    } else {
+      regError.innerText = res.error;
+    }
+  });
+
+  document.getElementById('doLoginBtn').addEventListener('click', () => {
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value.trim();
+    const res = login(email, password);
+    if (res.success) {
+      currentUser = res.user;
+      localStorage.setItem('pod_current_user', JSON.stringify({ email: currentUser.email, name: currentUser.name }));
+      loginError.innerText = '';
+      showMainContent();
+    } else {
+      loginError.innerText = res.error;
+    }
+  });
+
+  function checkSession() {
+    const saved = localStorage.getItem('pod_current_user');
+    if (saved) {
+      const { email, name } = JSON.parse(saved);
+      const users = getUsers();
+      const user = users.find(u => u.email === email);
+      if (user) {
+        currentUser = user;
+        showMainContent();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function showMainContent() {
+    authScreen.style.display = 'none';
+    mainContent.classList.add('visible');
+    userNameDisplay.innerText = currentUser.name;
+    initAppAfterLogin();
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('pod_current_user');
+    authScreen.style.display = 'flex';
+    mainContent.classList.remove('visible');
+    loginEmail.value = '';
+    loginPassword.value = '';
+    loginError.innerText = '';
+  }
+  logoutBtn.addEventListener('click', logout);
+
+  // --- Логика подписки ---
+  const tariffs = [
+    { name: "Неделя (Рабочая)",   price: 50,  desc: "Дни без парения сгорают" },
+    { name: "Неделя (Свободная)", price: 80,  desc: "Дни без парения не тратятся" },
+    { name: "Месяц (Рабочая)",    price: 150, desc: "Дни без парения сгорают" },
+    { name: "Месяц (Свободная)",  price: 180, desc: "Дни без парения не тратятся" }
+  ];
+
+  let selectedOwner = "maxim";
+  let selectedPayMethod = "card";
+  let selectedTariffIndex = 0;
+
+  const plansContainer = document.getElementById('plansList');
+  const subscribeBtn = document.getElementById('subscribeBtn');
+  const tgNameInput = document.getElementById('tgName');
+  const totalPriceSpan = document.getElementById('totalPrice');
+  const discountInfoDiv = document.getElementById('discountInfo');
+  const discountOwnerTextSpan = document.getElementById('discountOwnerText');
+  const donationOwnerSelect = document.getElementById('donationOwner');
+  const donateBtn = document.getElementById('donateBtn');
+  const donationAmount = document.getElementById('donationAmount');
+  const donationStatus = document.getElementById('donationStatus');
+  const cardModal = document.getElementById('cardDetailsModal');
+  const cashModal = document.getElementById('cashModal');
+  const confirmPaymentBtn = document.getElementById('confirmPayment');
+  const closeCardModal = document.getElementById('closeCardModal');
+  const closeCashModal = document.getElementById('closeCashModal');
+  const rulesModal = document.getElementById('rulesModal');
+  const openRulesBtn = document.getElementById('openRulesBtn');
+  const closeRulesModal = document.getElementById('closeRulesModal');
+
+  let pendingSubscription = false;
+  let pendingDonation = false;
+  let pendingDonationAmount = 0;
+  let pendingDonationOwner = null;
+
+  function getFinalPrice() {
+    let base = tariffs[selectedTariffIndex].price;
+    if (currentUser && getUserDiscount(currentUser.email, selectedOwner)) {
+      return Math.floor(base * 0.9);
+    }
+    return base;
+  }
+
+  function updateTotalPrice() {
+    totalPriceSpan.innerText = getFinalPrice();
+  }
+
+  function updateDiscountDisplay() {
+    if (currentUser) {
+      const hasMaxim = getUserDiscount(currentUser.email, 'maxim');
+      const hasRoma = getUserDiscount(currentUser.email, 'roma');
+      if (hasMaxim) {
+        discountOwnerTextSpan.innerText = 'у Максима';
+        discountInfoDiv.style.display = 'inline-block';
+      } else if (hasRoma) {
+        discountOwnerTextSpan.innerText = 'у Ромы';
+        discountInfoDiv.style.display = 'inline-block';
+      } else {
+        discountInfoDiv.style.display = 'none';
+      }
+    } else {
+      discountInfoDiv.style.display = 'none';
+    }
+  }
+
+  function renderTariffs() {
+    plansContainer.innerHTML = '';
+    tariffs.forEach((t, idx) => {
+      const div = document.createElement('div');
+      div.className = `plan-item ${idx === selectedTariffIndex ? 'active' : ''}`;
+      div.innerHTML = `<div class="plan-dot"></div><div class="plan-info"><div class="plan-name">${t.name}</div><div class="plan-price">${t.price} ₽</div><div class="plan-desc">${t.desc}</div></div>`;
+      div.addEventListener('click', () => {
+        selectedTariffIndex = idx;
+        renderTariffs();
+        updateTotalPrice();
+      });
+      plansContainer.appendChild(div);
+    });
+  }
+
+  function setOwner(owner, payMethod) {
+    selectedOwner = owner;
+    selectedPayMethod = payMethod;
+    document.querySelectorAll('.owner-card').forEach(card => {
+      const o = card.getAttribute('data-owner');
+      if (o === owner) card.classList.add('active');
+      else card.classList.remove('active');
+    });
+    updateTotalPrice();
+  }
+
+  document.querySelectorAll('.owner-card').forEach(card => {
+    card.addEventListener('click', () => {
+      setOwner(card.getAttribute('data-owner'), card.getAttribute('data-paymethod'));
+    });
+  });
+
+  subscribeBtn.addEventListener('click', () => {
+    let tg = tgNameInput.value.trim();
+    if (!tg) { alert('Укажите Telegram username'); return; }
+    if (tg.startsWith('@')) tg = tg.substring(1);
+    if (tg.length < 3) { alert('Слишком короткий username'); return; }
+    if (selectedPayMethod === 'cash') {
+      if (currentUser && getUserDiscount(currentUser.email, selectedOwner)) {
+        alert(`🎉 Скидка 10% для ${selectedOwner === 'maxim' ? 'Максима' : 'Ромы'} применена! Сумма: ${getFinalPrice()} ₽ (наличные).`);
+        useDiscount(currentUser.email, selectedOwner);
+        updateDiscountDisplay();
+        updateTotalPrice();
+      } else {
+        alert(`Оплата наличными владельцу ${selectedOwner === 'maxim' ? 'Максиму' : 'Роме'}.\nСумма: ${getFinalPrice()} ₽. Подписка активируется после передачи денег.`);
+      }
+      cashModal.classList.add('active');
+    } else {
+      pendingSubscription = true;
+      pendingDonation = false;
+      document.getElementById('cardModalTitle').innerText = '💳 Реквизиты Максима (оплата подписки)';
+      document.getElementById('paymentPurpose').innerText = 'Оплата подписки POD';
+      cardModal.classList.add('active');
+    }
+  });
+
+  confirmPaymentBtn.addEventListener('click', () => {
+    if (pendingSubscription) {
+      alert(`Оплата подписки на сумму ${getFinalPrice()} ₽ по реквизитам прошла успешно.`);
+      if (currentUser && getUserDiscount(currentUser.email, selectedOwner)) {
+        useDiscount(currentUser.email, selectedOwner);
+        updateDiscountDisplay();
+        updateTotalPrice();
+      }
+      pendingSubscription = false;
+      cardModal.classList.remove('active');
+    } else if (pendingDonation) {
+      alert(`Спасибо за пожертвование ${pendingDonationAmount} руб. для ${pendingDonationOwner === 'maxim' ? 'Максима' : 'Ромы'}! Скидка 10% для этого владельца активирована.`);
+      activateDiscount(currentUser.email, pendingDonationOwner);
+      updateDiscountDisplay();
+      pendingDonation = false;
+      cardModal.classList.remove('active');
+      donationAmount.value = '100';
+      donationOwnerSelect.value = 'maxim';
+      donationStatus.innerText = '✅ Пожертвование учтено, скидка активирована!';
+    }
+  });
+
+  function closeCardModalFn() { cardModal.classList.remove('active'); pendingSubscription = false; pendingDonation = false; }
+  closeCardModal.addEventListener('click', closeCardModalFn);
+  cardModal.addEventListener('click', (e) => { if (e.target === cardModal) closeCardModalFn(); });
+  closeCashModal.addEventListener('click', () => cashModal.classList.remove('active'));
+  cashModal.addEventListener('click', (e) => { if (e.target === cashModal) cashModal.classList.remove('active'); });
+
+  donateBtn.addEventListener('click', () => {
+    let amount = parseInt(donationAmount.value);
+    const owner = donationOwnerSelect.value;
+    if (isNaN(amount) || amount < 50) { donationStatus.innerText = '❌ Минимум 50 рублей'; return; }
+    if (owner === 'maxim') {
+      pendingDonation = true;
+      pendingSubscription = false;
+      pendingDonationAmount = amount;
+      pendingDonationOwner = 'maxim';
+      document.getElementById('cardModalTitle').innerText = '💳 Реквизиты Максима (пожертвование)';
+      document.getElementById('paymentPurpose').innerText = 'Пожертвование на расходники';
+      cardModal.classList.add('active');
+      donationStatus.innerText = '⏳ Открыты реквизиты, подтвердите оплату...';
+    } else {
+      cashModal.classList.add('active');
+      donationStatus.innerText = '✅ Пожертвование наличными — свяжитесь с Ромой. После передачи денег скидка активируется.';
+    }
+  });
+
+  // Правила — открытие/закрытие
+  if (openRulesBtn && closeRulesModal) {
+    openRulesBtn.addEventListener('click', () => rulesModal.classList.add('active'));
+    closeRulesModal.addEventListener('click', () => rulesModal.classList.remove('active'));
+    rulesModal.addEventListener('click', (e) => { if (e.target === rulesModal) rulesModal.classList.remove('active'); });
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId + 'Tab').classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  }
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+  });
+
+  function initAppAfterLogin() {
+    renderTariffs();
+    setOwner('maxim', 'card');
+    updateDiscountDisplay();
+    updateTotalPrice();
+  }
+
+  if (!checkSession()) {
+    authScreen.style.display = 'flex';
+    mainContent.classList.remove('visible');
+  } else {
+    showMainContent();
+  }
+</script>
+</body>
+</html>
